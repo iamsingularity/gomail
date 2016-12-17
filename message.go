@@ -10,14 +10,15 @@ import (
 
 // Message represents an email.
 type Message struct {
-	header      header
-	parts       []*part
-	attachments []*file
-	embedded    []*file
-	charset     string
-	encoding    Encoding
-	hEncoder    mimeEncoder
-	buf         bytes.Buffer
+	header         header
+	parts          []*part
+	attachments    []*file
+	embedded       []*file
+	charset        string
+	encoding       Encoding
+	hEncoder       mimeEncoder
+	buf            bytes.Buffer
+	allowBccHeader bool
 }
 
 type header map[string][]string
@@ -32,9 +33,10 @@ type part struct {
 // by default.
 func NewMessage(settings ...MessageSetting) *Message {
 	m := &Message{
-		header:   make(header),
-		charset:  "UTF-8",
-		encoding: QuotedPrintable,
+		header:         make(header),
+		charset:        "UTF-8",
+		encoding:       QuotedPrintable,
+		allowBccHeader: false,
 	}
 
 	m.applySettings(settings)
@@ -80,6 +82,14 @@ func SetCharset(charset string) MessageSetting {
 func SetEncoding(enc Encoding) MessageSetting {
 	return func(m *Message) {
 		m.encoding = enc
+	}
+}
+
+// AllowBccHeader enables adding the Bcc header when writing the message. By
+// default the Bcc header is not written out.
+func AllowBccHeader() MessageSetting {
+	return func(m *Message) {
+		m.allowBccHeader = true
 	}
 }
 

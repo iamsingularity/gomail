@@ -19,6 +19,8 @@ func (m *Message) WriteTo(w io.Writer) (int64, error) {
 }
 
 func (w *messageWriter) writeMessage(m *Message) {
+	w.allowBccHeader = m.allowBccHeader
+
 	if _, ok := m.header["Mime-Version"]; !ok {
 		w.writeString("Mime-Version: 1.0\r\n")
 	}
@@ -69,12 +71,13 @@ func (m *Message) hasAlternativePart() bool {
 }
 
 type messageWriter struct {
-	w          io.Writer
-	n          int64
-	writers    [3]*multipart.Writer
-	partWriter io.Writer
-	depth      uint8
-	err        error
+	w              io.Writer
+	n              int64
+	writers        [3]*multipart.Writer
+	partWriter     io.Writer
+	depth          uint8
+	err            error
+	allowBccHeader bool
 }
 
 func (w *messageWriter) openMultipart(mimeType string) {
@@ -241,7 +244,11 @@ func (w *messageWriter) writeLine(s string, charsLeft int) string {
 func (w *messageWriter) writeHeaders(h map[string][]string) {
 	if w.depth == 0 {
 		for k, v := range h {
-			if k != "Bcc" {
+			if k == "Bcc" {
+				if w.allowBccHeader {
+					w.writeHeader(k, v...)
+				}
+			} else {
 				w.writeHeader(k, v...)
 			}
 		}

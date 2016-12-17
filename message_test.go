@@ -138,6 +138,30 @@ func TestRecipients(t *testing.T) {
 	testMessage(t, m, 0, want)
 }
 
+func TestAllowBccRecipients(t *testing.T) {
+	m := NewMessage(AllowBccHeader())
+	m.SetHeaders(map[string][]string{
+		"From":    {"from@example.com"},
+		"Bcc":     {"bcc1@example.com", "bcc2@example.com"},
+		"Subject": {"Hello!"},
+	})
+	m.SetBody("text/plain", "Test message")
+
+	want := &message{
+		from: "from@example.com",
+		to:   []string{"bcc1@example.com", "bcc2@example.com"},
+		content: "From: from@example.com\r\n" +
+			"Bcc: bcc1@example.com, bcc2@example.com\r\n" +
+			"Subject: Hello!\r\n" +
+			"Content-Type: text/plain; charset=UTF-8\r\n" +
+			"Content-Transfer-Encoding: quoted-printable\r\n" +
+			"\r\n" +
+			"Test message",
+	}
+
+	testMessage(t, m, 0, want)
+}
+
 func TestAlternative(t *testing.T) {
 	m := NewMessage()
 	m.SetHeader("From", "from@example.com")
